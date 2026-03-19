@@ -2,13 +2,13 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import plotly.graph_objects as go
 import streamlit as st
-from utils.plotly_helpers import dark_layout_2d, dark_layout_3d, CYAN, MAGENTA, AMBER
+from utils.plotly_helpers import dark_layout_2d, CYAN, MAGENTA, AMBER
 
 
 def double_pendulum_deriv(t, state, L1, L2, m1, m2, g=9.81):
     """Returns derivatives for [θ1, ω1, θ2, ω2]. Exact Lagrangian equations."""
     th1, w1, th2, w2 = state
-    dth  = th2 - th1
+    dth     = th2 - th1
     cos_dth = np.cos(dth)
     sin_dth = np.sin(dth)
 
@@ -32,18 +32,18 @@ def double_pendulum_deriv(t, state, L1, L2, m1, m2, g=9.81):
     return [w1, dw1, w2, dw2]
 
 
-def cartesian(th1, th2, L1, L2):
-    """Convert angles to (x,y) positions of both bobs"""
-    x1 =  L1 * np.sin(th1)
-    y1 = -L1 * np.cos(th1)
-    x2 = x1 + L2 * np.sin(th2)
-    y2 = y1 - L2 * np.cos(th2)
+def cartesian_vec(th1_arr, th2_arr, L1, L2):
+    """Vectorized cartesian conversion for whole trajectory arrays."""
+    x1 =  L1 * np.sin(th1_arr)
+    y1 = -L1 * np.cos(th1_arr)
+    x2 = x1 + L2 * np.sin(th2_arr)
+    y2 = y1 - L2 * np.cos(th2_arr)
     return x1, y1, x2, y2
 
 
-def solve_pendulum(th1_0, th2_0, w1_0, w2_0, L1, L2, m1, m2, T=20, n_frames=2000):
+def solve_pendulum(th1_0, th2_0, w1_0, w2_0, L1, L2, m1, m2, T=20, n_points=2000):
     t_span = (0, T)
-    t_eval = np.linspace(0, T, n_frames)
+    t_eval = np.linspace(0, T, n_points)
     sol = solve_ivp(
         double_pendulum_deriv,
         t_span, [th1_0, w1_0, th2_0, w2_0],
@@ -51,7 +51,7 @@ def solve_pendulum(th1_0, th2_0, w1_0, w2_0, L1, L2, m1, m2, T=20, n_frames=2000
         args=(L1, L2, m1, m2),
         rtol=1e-9, atol=1e-9,
     )
-    return sol.t, sol.y
+    return sol.t, sol.y  # y shape: (4, n_points)  rows: th1,w1,th2,w2
 
 
 def render():
@@ -78,7 +78,7 @@ def render():
     with col4:
         m1  = st.slider("m₁ (kg)", 0.1, 5.0, 1.0, 0.1)
         m2  = st.slider("m₂ (kg)", 0.1, 5.0, 1.0, 0.1)
-        T   = st.slider("Time (s)", 5, 60, 20, 5)
+        T   = st.slider("Time (s)", 5, 120, 40, 5)
         eps = st.select_slider(
             "Chaos ε", options=[1e-8, 1e-6, 1e-4, 1e-2, 0.1], value=1e-6,
             format_func=lambda x: f"{x:.0e}",
@@ -88,6 +88,10 @@ def render():
         t,  y1 = solve_pendulum(th1_0, th2_0, w1_0, w2_0, L1, L2, m1, m2, T)
         _, y2  = solve_pendulum(th1_0 + eps, th2_0, w1_0, w2_0, L1, L2, m1, m2, T)
 
+    # Pre-compute cartesian positions for both trajectories (vectorized)
+    px1_1, py1_1, px2_1, py2_1 = cartesian_vec(y1[0], y1[2], L1, L2)
+    px1_2, py1_2, px2_2, py2_2 = cartesian_vec(y2[0], y2[2], L1, L2)
+
     tab1, tab2, tab3, tab4 = st.tabs([
         "🕰️ Animation",
         "🦋 Chaos Divergence",
@@ -96,23 +100,18 @@ def render():
     ])
 
     with tab1:
-        n_frames = min(300, len(t))
-        idx = np.linspace(0, len(t)-1, n_frames, dtype=int)
+        n_frames = min(250, len(t))
+        idx      = np.linspace(0, len(t) - 1, n_frames, dtype=int)
+        trail_len = 80
 
         frames = []
-        trail_len = 100
         for fi, i in enumerate(idx):
-            th1, _, th2, _ = y1[:, i]
-            x1, yc1, x2, yc2 = cartesian(th1, th2, L1, L2)
+            x1, yc1, x2, yc2 = px1_1[i], py1_1[i], px2_1[i], py2_1[i]
 
-            # Trail points
             trail_start = max(0, fi - trail_len)
-            trail_x = []
-            trail_y = []
-            for j in idx[trail_start:fi+1]:
-                _, _, tx2, ty2 = cartesian(y1[0, j], y1[2, j], L1, L2)
-                trail_x.append(tx2)
-                trail_y.append(ty2)
+            trail_idx   = idx[trail_start:fi + 1]
+            trail_x     = px2_1[trail_idx].tolist()
+            trail_y     = py2_1[trail_idx].tolist()
 
             frames.append(go.Frame(data=[
                 go.Scatter(x=[0, x1], y=[0, yc1], mode='lines',
@@ -120,34 +119,16 @@ def render():
                 go.Scatter(x=[x1, x2], y=[yc1, yc2], mode='lines',
                            line=dict(color=MAGENTA, width=3)),
                 go.Scatter(x=[x1], y=[yc1], mode='markers',
-                           marker=dict(size=m1*10+5, color=CYAN)),
+                           marker=dict(size=m1*10 + 5, color=CYAN)),
                 go.Scatter(x=[x2], y=[yc2], mode='markers',
-                           marker=dict(size=m2*10+5, color=MAGENTA)),
+                           marker=dict(size=m2*10 + 5, color=MAGENTA)),
                 go.Scatter(x=trail_x, y=trail_y, mode='lines',
                            line=dict(color=MAGENTA, width=1, dash='dot'), opacity=0.4),
             ]))
 
-        th1_i, _, th2_i, _ = y1[:, 0]
-        x1i, yc1i, x2i, yc2i = cartesian(th1_i, th2_i, L1, L2)
         lim = (L1 + L2) * 1.2
-
-        layout_kw = dark_layout_2d("Double Pendulum", "x (m)", "y (m)")
-        layout_kw.update(dict(
-            updatemenus=[dict(
-                type='buttons', showactive=False,
-                buttons=[
-                    dict(label='▶ Play', method='animate',
-                         args=[None, dict(frame=dict(duration=20, redraw=True),
-                                          fromcurrent=True)]),
-                    dict(label='⏸ Pause', method='animate',
-                         args=[[None], dict(frame=dict(duration=0), mode='immediate')]),
-                ]
-            )],
-            xaxis=dict(range=[-lim, lim], scaleanchor='y',
-                       gridcolor="#1a1a3a", color="#4a4a6a"),
-            yaxis=dict(range=[-lim, lim], gridcolor="#1a1a3a", color="#4a4a6a"),
-            showlegend=False,
-        ))
+        x1i, yc1i = px1_1[0], py1_1[0]
+        x2i, yc2i = px2_1[0], py2_1[0]
 
         fig = go.Figure(
             data=[
@@ -156,23 +137,43 @@ def render():
                 go.Scatter(x=[x1i, x2i], y=[yc1i, yc2i], mode='lines',
                            line=dict(color=MAGENTA, width=3)),
                 go.Scatter(x=[x1i], y=[yc1i], mode='markers',
-                           marker=dict(size=m1*10+5, color=CYAN)),
+                           marker=dict(size=m1*10 + 5, color=CYAN)),
                 go.Scatter(x=[x2i], y=[yc2i], mode='markers',
-                           marker=dict(size=m2*10+5, color=MAGENTA)),
+                           marker=dict(size=m2*10 + 5, color=MAGENTA)),
                 go.Scatter(x=[x2i], y=[yc2i], mode='lines',
                            line=dict(color=MAGENTA, width=1)),
             ],
             frames=frames,
-            layout=go.Layout(**layout_kw),
+        )
+        fig.update_layout(
+            title=dict(text="Double Pendulum", font=dict(color=CYAN, family="IBM Plex Mono", size=13)),
+            paper_bgcolor="#080810",
+            plot_bgcolor="#0d0d1a",
+            font=dict(color="#e0e0ff", family="IBM Plex Mono"),
+            showlegend=False,
+            margin=dict(l=40, r=20, t=50, b=40),
+            xaxis=dict(range=[-lim, lim], scaleanchor='y',
+                       gridcolor="#1a1a3a", zerolinecolor="#2a2a4a", color="#4a4a6a",
+                       title="x (m)"),
+            yaxis=dict(range=[-lim, lim],
+                       gridcolor="#1a1a3a", zerolinecolor="#2a2a4a", color="#4a4a6a",
+                       title="y (m)"),
+            updatemenus=[dict(
+                type='buttons', showactive=False,
+                x=0.05, y=1.08, xanchor='left',
+                buttons=[
+                    dict(label='▶ Play', method='animate',
+                         args=[None, dict(frame=dict(duration=33, redraw=True),
+                                          fromcurrent=True, mode='immediate')]),
+                    dict(label='⏸ Pause', method='animate',
+                         args=[[None], dict(frame=dict(duration=0), mode='immediate')]),
+                ]
+            )],
         )
         st.plotly_chart(fig, use_container_width=True)
 
     with tab2:
-        x2_1 = np.array([cartesian(y1[0,i], y1[2,i], L1, L2)[2] for i in range(len(t))])
-        y2_1 = np.array([cartesian(y1[0,i], y1[2,i], L1, L2)[3] for i in range(len(t))])
-        x2_2 = np.array([cartesian(y2[0,i], y2[2,i], L1, L2)[2] for i in range(len(t))])
-        y2_2 = np.array([cartesian(y2[0,i], y2[2,i], L1, L2)[3] for i in range(len(t))])
-        dist  = np.sqrt((x2_1 - x2_2)**2 + (y2_1 - y2_2)**2) + 1e-300
+        dist = np.sqrt((px2_1 - px2_2)**2 + (py2_1 - py2_2)**2) + 1e-300
 
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(
@@ -208,26 +209,42 @@ def render():
         st.plotly_chart(fig3, use_container_width=True)
 
     with tab4:
-        section_pts = []
-        for i in range(1, len(t)):
-            if y1[2, i-1] < 0 and y1[2, i] >= 0:
-                section_pts.append((y1[0, i], y1[1, i]))
+        # Poincaré section: record (θ1 mod 2π, ω1) when wrapped θ2 crosses 0 upward.
+        # Wrap angles to [-π, π] so rotation counting doesn't prevent crossings.
+        th1_w = np.mod(y1[0] + np.pi, 2*np.pi) - np.pi
+        th2_w = np.mod(y1[2] + np.pi, 2*np.pi) - np.pi
+        w1_arr = y1[1]
 
-        if len(section_pts) > 5:
-            sp = np.array(section_pts)
+        # Upward zero-crossings of wrapped θ2
+        cross  = (th2_w[:-1] < 0) & (th2_w[1:] >= 0)
+        pts_i  = np.where(cross)[0] + 1
+
+        if len(pts_i) >= 2:
+            sp = np.column_stack([th1_w[pts_i], w1_arr[pts_i]])
             fig4 = go.Figure()
             fig4.add_trace(go.Scatter(
-                x=sp[:,0], y=sp[:,1],
+                x=sp[:, 0], y=sp[:, 1],
                 mode='markers',
-                marker=dict(size=3, color=AMBER, opacity=0.8),
+                marker=dict(size=4, color=AMBER, opacity=0.85),
                 name='Poincaré points',
             ))
             fig4.update_layout(
                 **dark_layout_2d(
                     f"Poincaré Section ({len(sp)} crossings) — θ₁ vs ω₁ when θ₂=0↑",
-                    "θ₁ (rad)", "ω₁ (rad/s)",
+                    "θ₁ (rad, wrapped)", "ω₁ (rad/s)",
                 )
             )
             st.plotly_chart(fig4, use_container_width=True)
+
+            st.markdown(f"""
+            <div class="fact-box">
+              <b>{len(sp)}</b> zero-crossings of θ₂ recorded.<br>
+              Chaotic motion → scattered cloud of points.<br>
+              Periodic motion → finite set of discrete points.
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.info("Increase simulation time to collect more Poincaré crossings.")
+            st.info(
+                f"Only {len(pts_i)} Poincaré crossing(s) found with T={T}s. "
+                "Try increasing simulation time or using larger initial angles (e.g. 150°, 150°)."
+            )

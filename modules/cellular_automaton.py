@@ -94,7 +94,7 @@ def render():
         col2a, col2b, col2c = st.columns(3)
         with col2a:
             width  = st.select_slider("Width (cells)", options=[200, 400, 600, 1000], value=400)
-            steps  = st.select_slider("Generations",   options=[100, 200, 500, 1000], value=300)
+            steps  = st.select_slider("Generations",   options=[100, 200, 500, 1000], value=200)
         with col2b:
             init_type = st.radio(
                 "Initial state",
@@ -134,7 +134,7 @@ def render():
     img.save(buf, format='PNG')
     st.image(
         buf.getvalue(),
-        use_container_width=True,
+        width="stretch",
         caption=f"Rule {rule_num} spacetime diagram — {width} cells × {steps} generations",
     )
 
