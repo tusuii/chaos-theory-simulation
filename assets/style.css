@@ -1,0 +1,221 @@
+/* ================================================
+   CHAOS THEORY LAB — Scientific Observatory Theme
+   Fonts: Orbitron (titles) + IBM Plex Mono (body)
+   Palette: Black, Electric Cyan, Magenta, Amber
+   ================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg:        #080810;
+  --surface:   #0d0d1a;
+  --surface2:  #12122a;
+  --cyan:      #00f5ff;
+  --magenta:   #ff006e;
+  --amber:     #ffbe0b;
+  --text:      #e0e0ff;
+  --muted:     #4a4a6a;
+  --border:    #1a1a3a;
+}
+
+html, body, [class*="css"] {
+  font-family: 'IBM Plex Mono', monospace !important;
+  background-color: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+/* ---- SIDEBAR ---- */
+div[data-testid="stSidebar"] {
+  background: var(--surface) !important;
+  border-right: 1px solid var(--border);
+}
+
+.lab-logo {
+  text-align: center;
+  padding: 1.5rem 0.5rem 1rem;
+}
+.logo-icon {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+  color: var(--cyan);
+  text-shadow: 0 0 20px var(--cyan);
+  letter-spacing: -2px;
+}
+.logo-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 6px;
+  display: block;
+  margin-top: 0.3rem;
+}
+.logo-sub {
+  font-size: 0.65rem;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 0.2rem;
+}
+.sidebar-quote {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.7;
+  text-align: center;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0,0,0,0.3);
+}
+.quote-attr {
+  margin-top: 0.5rem;
+  color: var(--amber);
+  font-style: normal;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+}
+
+/* ---- MODULE HEADERS ---- */
+.module-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--cyan);
+  text-shadow: 0 0 30px rgba(0,245,255,0.4);
+  letter-spacing: 2px;
+  padding-top: 0.5rem;
+}
+.module-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ---- FACT BOXES ---- */
+.fact-box {
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid rgba(0,245,255,0.2);
+  border-left: 3px solid var(--cyan);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--text);
+  margin: 0.75rem 0;
+}
+
+/* ---- PRESET TAGS ---- */
+.preset-tag {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  color: var(--amber);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ---- STREAMLIT OVERRIDES ---- */
+.stSlider > div > div > div {
+  background: var(--cyan) !important;
+}
+.stSlider label {
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.8rem !important;
+}
+.stSelectbox > div > div,
+.stSelectSlider > div > div,
+.stNumberInput > div > div > input {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+}
+.stTabs [data-baseweb="tab"] {
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.8rem !important;
+  color: var(--muted) !important;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  color: var(--cyan) !important;
+  border-bottom-color: var(--cyan) !important;
+}
+.stTabs [data-baseweb="tab-list"] {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.stButton > button {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--cyan) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  border-radius: 4px !important;
+  transition: all 0.2s !important;
+}
+.stButton > button:hover {
+  border-color: var(--cyan) !important;
+  background: rgba(0,245,255,0.08) !important;
+  box-shadow: 0 0 12px rgba(0,245,255,0.2) !important;
+}
+.stRadio label {
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.82rem !important;
+}
+.stCheckbox label {
+  color: var(--text) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  font-size: 0.8rem !important;
+}
+.stMetric {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem !important;
+}
+hr {
+  border-color: var(--border) !important;
+  margin: 1rem 0 !important;
+}
+.stSpinner > div > div {
+  border-top-color: var(--cyan) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+/* Glow pulse animation for header */
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(0,245,255,0.4); }
+  50%       { text-shadow: 0 0 40px rgba(0,245,255,0.8), 0 0 80px rgba(0,245,255,0.2); }
+}
+.module-title {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+
+/* Main content background */
+.main .block-container {
+  background-color: var(--bg) !important;
+  padding-top: 1rem !important;
+}
+
+/* Download button */
+.stDownloadButton > button {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--amber) !important;
+  font-family: 'IBM Plex Mono', monospace !important;
+  border-radius: 4px !important;
+}
+.stDownloadButton > button:hover {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 12px rgba(255,190,11,0.2) !important;
+}
